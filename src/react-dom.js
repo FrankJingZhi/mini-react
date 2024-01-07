@@ -24,15 +24,31 @@ function mountArray(VNodes, containerDOM) {
     })
 }
 
+// 处理属性
+function setPropsFromDOM(dom, VNodeProps = {}) {
+    if(!VNodeProps) return
+    for(let key in VNodeProps){
+        if(key === 'children') continue
+        if(key === 'style'){
+            for(let styleKey in VNodeProps.style){
+                dom.style[styleKey] = VNodeProps.style[styleKey]
+            }
+        }else if(/^on[A-Z].*/.test(key)){
+            // TODO: 事件绑定 
+        }else {
+            dom[key] = VNodeProps[key]
+        }
+    }
+}
+
 function createDOM(VNode) {
-    // 创建元素
-    // 处理子元素
-    // 处理属性值
     const {type, props} = VNode;
     let dom;
+    // 创建元素
     if(type && VNode.$$typeof === REACT_ELEMENT){
         dom = document.createElement(type)
     }
+    // 处理子元素
     if(props){
         if(typeof props.children === 'object' && props.children.type){
             mount(props.children, dom)
@@ -42,6 +58,8 @@ function createDOM(VNode) {
             dom.appendChild(document.createTextNode(props.children))
         }
     }
+    // 处理属性值
+    setPropsFromDOM(dom, props)
     return dom
 }
 
