@@ -1,6 +1,8 @@
 import {REACT_ELEMENT} from './utils'
 function createElement(type, properties, children){
-    ['__self', '__source', 'key', 'ref'].forEach(key => delete properties[key])
+    // let key = properties.key || null;
+    // let ref = properties.ref || null;
+    // ['__self', '__source', 'key', 'ref'].forEach(key => delete properties[key])
     let props = {...properties}
     if(arguments.length > 3){
         props.children = Array.prototype.slice.call(arguments, 2)
@@ -11,6 +13,8 @@ function createElement(type, properties, children){
         $$typeof: REACT_ELEMENT,
         type,
         props,
+        // key,
+        // ref
     }
 }
 

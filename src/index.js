@@ -7,3 +7,5 @@ console.log(<div className='box' style={{color: 'red'}}>hello, react!<span>xxx1<
 // root.render(<div>hello, react!</div>);
 
 ReactDOM.render(<div id='box' className='box' style={{color: 'red'}}>hello, react!<span>xxx1</span><span>xxx2</span></div>, document.getElementById('root'))
+
+
