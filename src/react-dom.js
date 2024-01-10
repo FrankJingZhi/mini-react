@@ -1,4 +1,4 @@
-import { REACT_ELEMENT } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF } from "./utils";
 import {addEvent} from './event.js'
 
 function render(VNode, containerDOM) {
@@ -84,10 +84,23 @@ export function updateDOMTree(oldDOM, newVNode) {
     parentNode.appendChild(createDOM(newVNode))
 }
 
+// 生成forwardRef的dom
+function getForwardRefDOM(VNode){
+    const {type, props, ref} = VNode
+    const renderVNode = type.render(props, ref)
+    if(!renderVNode) return null
+    return createDOM(renderVNode)
+}
+
 function createDOM(VNode) {
     if(!VNode) return
     const {type, props, ref} = VNode;
     let dom;
+
+    // 处理forwardRef
+    if(type && type.$$typeof === REACT_FORWARD_REF){
+        return getForwardRefDOM(VNode)
+    }
 
     // 处理类组件
     if(typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT && type.IS_CLASS_COMPONENT){
