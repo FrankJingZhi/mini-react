@@ -20,9 +20,18 @@ function createElement(type, properties, children){
     }
 }
 
+// 创建ref
+function createRef(){
+    // 初始化
+    return {
+        current: null
+    }
+}
+
 const React = {
     createElement,
-    Component
+    Component,
+    createRef
 }
 
 export default React;

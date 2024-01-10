@@ -52,11 +52,13 @@ function getFunctionalDOM(VNode){
 
 // 处理类组件
 function getClassDOM(VNode){
-    const {type, props} = VNode
+    const {type, props, ref} = VNode
     const instance = new type(props)
     const renderVNode = instance.render()
     // 将虚拟dom保存到类组件实例上，方便后续更新
     instance.oldVNode = renderVNode
+    // 将ref和dom绑定
+    ref && (ref.current = instance)
     // TODO: 需要删除的代码 start
     // setTimeout(()=>{
     //     instance.setState({name: 'jack'})
@@ -83,7 +85,8 @@ export function updateDOMTree(oldDOM, newVNode) {
 }
 
 function createDOM(VNode) {
-    const {type, props} = VNode;
+    if(!VNode) return
+    const {type, props, ref} = VNode;
     let dom;
 
     // 处理类组件
@@ -112,6 +115,8 @@ function createDOM(VNode) {
     setPropsFromDOM(dom, props)
     // 将虚拟dom和dom绑定
     VNode.dom = dom
+    // 将dom和ref绑定
+    ref && (ref.current = dom)
     return dom
 }
 
