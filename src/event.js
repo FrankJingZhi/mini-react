@@ -12,7 +12,7 @@ export function addEvent(dom, eventName, bindFunction) {
 
 // nativeEvent：原始的事件对象
 function dispatchEvent(nativeEvent){
-    // 开始事件批量更新
+    // 开启setState队列批量更新开关
     UpdaterQueue.isBatch = true
     // 事件委托机制的核心点二：屏蔽浏览器之间的差异
     let syntheticEvent = createsyntheticEvent(nativeEvent)    
@@ -31,20 +31,27 @@ function dispatchEvent(nativeEvent){
         }
         target = target.parentNode
     }
+    // 执行setState队列批量更新
     flushUpdaterQueue()
 }
 
 function createsyntheticEvent(nativeEvent){
     let nativeEventKeyValues = {}
+    // 这里目前看来用for...in和Object.keys结果是一样的
     for(const key in nativeEvent){
         nativeEventKeyValues[key] = typeof nativeEvent[key] === 'function' 
         ? nativeEvent[key].bind(nativeEvent)
         : nativeEvent[key]
     }
-    let syntheticEvent = Object.assign(nativeEventKeyValues, {
+    // let nativeEventKeyValues2 = {}
+    // Object.keys(nativeEventKeyValues).forEach(key => {
+    //     nativeEventKeyValues2[key] = nativeEventKeyValues[key]
+    // })
+    // console.log('nativeEventKeyValues',nativeEventKeyValues, nativeEventKeyValues2)
+    const syntheticEvent = Object.assign(nativeEventKeyValues, {
         nativeEvent,
         isDefaultPrevented: false,
-        isProPagationStopped: false,
+        isPropPagationStopped: false,
         preventDefault(){
             this.isDefaultPrevented = true
             if(this.nativeEvent.preventDefault){
@@ -54,7 +61,7 @@ function createsyntheticEvent(nativeEvent){
             }
         },
         stopPropagation(){
-            this.isProPagationStopped = true
+            this.isPropPagationStopped = true
             if(this.nativeEvent.stopPropagation){
                 this.nativeEvent.stopPropagation()
             }else{
@@ -62,5 +69,5 @@ function createsyntheticEvent(nativeEvent){
             }
         }
     })
-    return nativeEventKeyValues
+    return syntheticEvent
 }

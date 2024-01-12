@@ -7,40 +7,40 @@ import React from './react';
 // }
 
 // 类组件
-// class MyComponent extends React.Component{
-//     counter = 0
-//     constructor(props){
-//         super(props)
-//         this.state = {
-//             // name: 'child1',
-//             count: '0'
-//         }
-//     }
+class MyComponent extends React.Component{
+    counter = 0
+    constructor(props){
+        super(props)
+        this.state = {
+            // name: 'child1',
+            count: '0'
+        }
+    }
 
-//     updateText(value){
-//         this.setState({
-//             count: value.toString() // TODO：这里必须是string，不能是其他类型。源码里也是这么实现的吗？
-//         })
-//     }
+    updateText(value){
+        this.setState({
+            count: value.toString() // TODO：这里必须是string，不能是其他类型。源码里也是这么实现的吗？
+        })
+    }
 
-//     render(){
-//         return <div>
-//             <p style={{
-//                 padding: '5px',
-//                 border: '1px solid red',
-//                 color: 'red',
-//                 borderRadius: '4px'
-//             }}
-//                 onClick={() => this.updateText(++this.counter)}
-//             >
-//                 count is: {this.state.count}
-//             </p>
-//             {/* <p>
-//                 name is: {this.state.name}
-//             </p> */}
-//         </div>
-//     }
-// }
+    render(){
+        return <div>
+            <p style={{
+                padding: '5px',
+                border: '1px solid red',
+                color: 'red',
+                borderRadius: '4px'
+            }}
+                onClick={() => this.updateText(++this.counter)}
+            >
+                count is: {this.state.count}
+            </p>
+            {/* <p>
+                name is: {this.state.name}
+            </p> */}
+        </div>
+    }
+}
 
 // // 官网ref使用示例
 // class CustomTextInput extends React.Component {
@@ -93,13 +93,25 @@ import React from './react';
 //     }
 // }
 
-const MyForwardRefComponent = React.forwardRef((props, ref) => {
-    return <div ref={ref}>MyForwardRefComponent</div>
-})
-console.log('MyForwardRefComponent', MyForwardRefComponent)
+// const MyForwardRefComponent = React.forwardRef((props, ref) => {
+//     return <div ref={ref}>MyForwardRefComponent</div>
+// })
+// console.log('MyForwardRefComponent', MyForwardRefComponent)
+
+// class MyComponent extends React.Component {
+//     constructor(props){
+//         super(props)
+//         this.state = {
+//             name: 'React'
+//         }
+//     }
+//     render() {
+//         return <div>Hello, {this.state.name}!</div>
+//     }
+//   }
 
 // ReactDOM.render(<MyComponent name='child1'/>, document.getElementById('root'))
-ReactDOM.render(<MyForwardRefComponent />, document.getElementById('root'))
+ReactDOM.render(<MyComponent />, document.getElementById('root'))
 
 
   

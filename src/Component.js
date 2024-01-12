@@ -63,16 +63,16 @@ export class Component {
         this.state = {}
     }
     setState(partialState){
-        // 合并属性
+        // 合并数据
         // 重新渲染进行更新
         this.updater.addState(partialState)
     }
     update(){
-        // 获取新的虚拟dom
-        // 根据新的虚拟dom更新真实dom
-        // 将真实dom挂载到容器上
-        let oldVNode = this.oldVNode; // TODO：让类组件拥有一个oldVNode属性保存类组件实例对应的虚拟dom
-        let oldDOM = findDOMByVNode(oldVNode); // TODO：让真实dom保存到oldVNode上
+        // 获取旧的虚拟dom和新的虚拟dom
+        // 将旧的dom删除
+        // 将新的dom挂载到容器上
+        let oldVNode = this.oldVNode; // 让类组件拥有一个oldVNode属性保存类组件实例对应的虚拟dom
+        let oldDOM = findDOMByVNode(oldVNode); // 让真实dom保存到oldVNode上
         let newVNode = this.render() 
         updateDOMTree(oldDOM, newVNode)
         this.oldVNode = newVNode

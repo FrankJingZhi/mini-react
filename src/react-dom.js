@@ -60,9 +60,12 @@ function getClassDOM(VNode){
     // 将ref和dom绑定
     ref && (ref.current = instance)
     // TODO: 需要删除的代码 start
-    // setTimeout(()=>{
-    //     instance.setState({name: 'jack'})
-    // },3000)
+    setTimeout(()=>{
+        instance.setState({name: 'mini-react1'})
+    },3000)
+    setTimeout(()=>{
+        instance.setState({name: 'mini-react2'})
+    },6000)
     // TODO: 需要删除的代码 end
     if(!renderVNode) return null
     return createDOM(renderVNode)
