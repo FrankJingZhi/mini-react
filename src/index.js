@@ -6,41 +6,48 @@ import React from './react';
 //     return <div id='box' className='box' style={{color: 'red'}}>hello, react!<span>xxx1</span><span>xxx2</span></div>
 // }
 
-// 类组件
-class MyComponent extends React.Component{
-    counter = 0
-    constructor(props){
-        super(props)
-        this.state = {
-            // name: 'child1',
-            count: '0'
-        }
-    }
-
-    updateText(value){
-        this.setState({
-            count: value.toString() // TODO：这里必须是string，不能是其他类型。源码里也是这么实现的吗？
-        })
-    }
-
+class MyChildComponent extends React.Component{
     render(){
-        return <div>
-            <p style={{
-                padding: '5px',
-                border: '1px solid red',
-                color: 'red',
-                borderRadius: '4px'
-            }}
-                onClick={() => this.updateText(++this.counter)}
-            >
-                count is: {this.state.count}
-            </p>
-            {/* <p>
-                name is: {this.state.name}
-            </p> */}
-        </div>
+        return <p>MyChildComponent</p>
     }
 }
+
+// 类组件
+// class MyComponent extends React.Component{
+//     counter = 0
+//     constructor(props){
+//         super(props)
+//         this.state = {
+//             // name: 'child1',
+//             count: '0'
+//         }
+//     }
+
+//     updateText(value){
+//         this.setState({
+//             count: value.toString() // TODO：这里必须是string，不能是其他类型。源码里也是这么实现的吗？
+//         })
+//     }
+
+//     render(){
+//         return <div>
+//             <p style={{
+//                 padding: '5px',
+//                 border: '1px solid red',
+//                 color: 'red',
+//                 borderRadius: '4px'
+//             }}
+//                 onClick={() => this.updateText(++this.counter)}
+//             >
+//                 count is: {this.state.count}
+//             </p>
+//             <MyChildComponent/>
+//             {/* <p>
+//                 name is: {this.state.name}
+//             </p> */}
+//         </div>
+//     }
+// }
 
 // // 官网ref使用示例
 // class CustomTextInput extends React.Component {
@@ -110,8 +117,43 @@ class MyComponent extends React.Component{
 //     }
 //   }
 
-// ReactDOM.render(<MyComponent name='child1'/>, document.getElementById('root'))
-ReactDOM.render(<MyComponent />, document.getElementById('root'))
+// dom diff调试案例
+class MyDomDiffComponent extends React.Component{
+    isReset = false
+    oldValue = ['A','B','C','D','E']
+    newValue = ['C','B','E','F','A']
+    constructor(props){
+        super(props)
+        this.state = {
+            value: this.oldValue
+        }
+    }
+    updateValue(){
+        this.setState({
+            value: this.isReset ? this.oldValue : this.newValue
+        })
+    }
+    render(){
+        return <div>
+            <p style={{
+                padding: '5px',
+                border: '1px solid red',
+                color: 'red',
+                borderRadius: '4px',
+                width: '200px',
+                cursor: 'pointer'
+            }}
+                onClick={() => this.updateValue()}
+            >
+                updateValue
+            </p>
+            <p>
+                {this.state.value.map(item => <span key={item}>{item}</span>)}
+            </p>
+        </div>
+    }
+}
+ReactDOM.render(<MyDomDiffComponent />, document.getElementById('root'))
 
 
   

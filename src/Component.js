@@ -74,7 +74,7 @@ export class Component {
         let oldVNode = this.oldVNode; // 让类组件拥有一个oldVNode属性保存类组件实例对应的虚拟dom
         let oldDOM = findDOMByVNode(oldVNode); // 让真实dom保存到oldVNode上
         let newVNode = this.render() 
-        updateDOMTree(oldDOM, newVNode)
+        updateDOMTree(oldVNode, newVNode, oldDOM)
         this.oldVNode = newVNode
     }
 }
