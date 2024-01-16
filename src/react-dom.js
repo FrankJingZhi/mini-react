@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF,REACT_TEXT,CREATE,MOVE } from "./utils";
 import {addEvent} from './event.js'
 
 function render(VNode, containerDOM) {
@@ -16,12 +16,13 @@ function mount(VNode, containerDOM) {
 
 function mountArray(VNodes, containerDOM) {
     if(!Array.isArray(VNodes)) return 
-    VNodes.forEach(vnode => {
-        if(typeof vnode === 'string'){
-            containerDOM.appendChild(document.createTextNode(vnode))
-        }else {
-            mount(vnode, containerDOM)
+    VNodes.forEach((vnode,index) => {
+        if(Array.isArray(vnode)){
+            mountArray(vnode, containerDOM)
+            return
         }
+        vnode.index = index // dom diff 有用
+        mount(vnode, containerDOM)
     })
 }
 
@@ -60,12 +61,12 @@ function getClassDOM(VNode){
     // 将ref和dom绑定
     ref && (ref.current = instance)
     // TODO: 需要删除的代码 start
-    setTimeout(()=>{
-        instance.setState({name: 'mini-react1'})
-    },3000)
-    setTimeout(()=>{
-        instance.setState({name: 'mini-react2'})
-    },6000)
+    // setTimeout(()=>{
+    //     instance.setState({name: 'mini-react1'})
+    // },3000)
+    // setTimeout(()=>{
+    //     instance.setState({name: 'mini-react2'})
+    // },6000)
     // TODO: 需要删除的代码 end
     if(!renderVNode) return null
     return createDOM(renderVNode)
@@ -78,13 +79,176 @@ export function findDOMByVNode(VNode) {
 }
 
 // 更新dom树
-export function updateDOMTree(oldDOM, newVNode) {
+export function updateDOMTree(oldVNode, newVNode, oldDOM) {
     // 找到当前dom的父节点
     const parentNode = oldDOM && oldDOM.parentNode
-    // 移除掉旧的dom
-    parentNode.removeChild(oldDOM)
-    // 挂载新的dom
-    parentNode.appendChild(createDOM(newVNode))
+    const typeMap = {
+        noTyperate: !oldVNode && !newVNode,// 不做操作 - 新节点、旧节点都不存在
+        add: !oldVNode && newVNode,// 添加 - 新节点存在，旧节点不存在
+        delete: oldVNode && !newVNode,// 删除 - 旧节点存在，新节点不存在
+        update: oldVNode && newVNode && oldVNode.type !== newVNode.type, // 更新 - 旧节点和新节点都存在，但是类型不一样
+        // 其他情况 - 旧节点和新节点都存在，类型一样 --> 值得我们进行深入探究，dom diff算法
+    }
+    // 过滤出当前
+    const updateType = Object.keys(typeMap).filter(key => typeMap[key])[0]
+    switch(updateType){
+        case 'noTyperate':
+            break;
+        case 'add':
+            // 将新节点挂载到父节点上
+            parentNode.appendChild(createDOM(newVNode))
+            break;
+        case 'delete':
+            // 删除当前dom
+            removeVNode(oldVNode)
+            break;
+        case 'update':
+            // 删除当前dom
+            removeVNode(oldVNode)
+            // 将新节点挂载到父节点上
+            parentNode.appendChild(createDOM(newVNode))
+            break;
+        default:
+            // 其他情况 - 旧节点和新节点都存在，类型一样 --> 值得我们进行深入探究，dom diff算法
+            deepDOMDiff(oldVNode, newVNode)
+            break;
+    }
+
+}
+
+// 删除虚拟dom
+function removeVNode(VNode){
+    const currentDOM = findDOMByVNode(VNode)
+    currentDOM && currentDOM.remove()
+}
+
+// 旧节点和新节点都存在，类型一样 --> 值得我们进行深入探究，dom diff算法
+function deepDOMDiff(oldVNode, newVNode){
+    const diffTypeMap = {
+        originNode: typeof oldVNode.type === 'string', // 原生节点
+        classComponent: typeof oldVNode.type === 'function' && oldVNode.type.IS_CLASS_COMPONENT, // 类组件
+        functionComponent: typeof oldVNode.type === 'function', // 函数组件
+        text: oldVNode.type === REACT_TEXT // 文本节点
+    }
+    const diffType = Object.keys(diffTypeMap).filter(key => diffTypeMap[key])[0]
+    switch(diffType){
+        case 'originNode':
+            // 无论是类组件还是函数组件，最终都会走到这里，因为类、函数组件本质都是原生节点
+            // 1. 当前节点类型没有变化，直接复用旧节点，更新属性
+            const currentDOM = newVNode.dom = findDOMByVNode(oldVNode)
+            setPropsFromDOM(currentDOM, newVNode.props)
+            // 2. 比对处理子节点
+            updateChildren(currentDOM, oldVNode.props.children, newVNode.props.children)
+            break;
+        case 'classComponent': 
+            updateClassComponent(oldVNode, newVNode)
+            break;
+        case 'functionComponent':
+            updateFunctionComponent(oldVNode, newVNode)
+            break;
+        case 'text':
+            // 文本节点没有变化，直接复用
+            newVNode.dom = findDOMByVNode(oldVNode)
+            newVNode.dom.textContent = newVNode.props.text
+            break;
+        default:
+            break;
+    }
+}
+
+function updateClassComponent(oldVNode, newVNode){
+    // 找到类组件实例，执行更新。实现递归更新
+    const classInstance = newVNode.classInstance = oldVNode.classInstance
+    classInstance.updater.launchUpdate()
+}
+            
+function updateFunctionComponent(oldVNode, newVNode){
+    const oldDOM = findDOMByVNode(oldVNode)
+    const {type, props} = newVNode
+    const newRenderVNode = type(props)
+    updateDOMTree(oldVNode.oldRenderVNode, newRenderVNode, oldDOM)
+    newVNode.oldRenderVNode = newRenderVNode
+}
+
+// 比对子节点 - dom diff算法核心
+function updateChildren(currentDOM, oldChildren, newChildren){
+    const oldVNodeChildren = Array.isArray(oldChildren) ? oldChildren : [oldChildren]
+    const newVNodeChildren = Array.isArray(newChildren) ? newChildren : [newChildren]
+    let lastNotChangeIndex = -1 // 当前 已遍历过的节点在旧节点中的index 中，最大的index
+    // 存储旧节点的key-vnode对应关系，后面对比用
+    const oldVNodeChildrenMap = {}
+    oldVNodeChildren.forEach((vnode, index)=>{
+        const key = vnode.key ? vnode.key : index
+        oldVNodeChildrenMap[key] = vnode
+    })
+    // 遍历新虚拟dom，找到
+    // 1. 可以复用但是需要移动的节点
+    // 2. 需要重新创建的节点
+    // 3. 需要删除的节点
+    // 4. 剩下就是可以直接使用的节点
+    const actions = [] // 存储动作（需要做处理的节点：创建、删除、移动）
+    newVNodeChildren.forEach((newVNode, index)=>{
+        newVNode.index = index
+        const newKey = newVNode.key ? newVNode.key : index
+        const oldVNode = oldVNodeChildrenMap[newKey]
+        // 看当前新节点是否在旧节点中已存在
+        if(oldVNode){
+            // 存在，继续深度比对
+            deepDOMDiff(oldVNode, newVNode)
+            // 找到需要移动的节点，原理：如果当前新节点在旧节点中的index小于lastNotChangeIndex，那么就需要移动
+            // 这里的index是在mountArray函数中记录的
+            if(oldVNode.index < lastNotChangeIndex){
+                actions.push({
+                    type: MOVE,
+                    oldVNode,
+                    newVNode,
+                    index
+                })
+            }
+            delete oldVNodeChildrenMap[newKey]
+            lastNotChangeIndex = Math.max(lastNotChangeIndex, oldVNode.index)
+        }else {
+            // 不存在，需要重新创建
+            actions.push({
+                type: CREATE,
+                newVNode,
+                oldVNode,
+                index
+            })
+        }
+    })
+
+    // 找到需要删除的节点
+    // 需要移动的节点，需要删除
+    const VNodeToMove = actions.filter(action=>action.type === MOVE).map(action=>action.oldVNode)
+    // 需要删除的节点（没有用到的节点），需要删除
+    const VNodeToDelete = Object.values(oldVNodeChildrenMap)
+    VNodeToMove.concat(VNodeToDelete).forEach(vnode=>{
+        const currentDOM = findDOMByVNode(vnode)
+        currentDOM && currentDOM.remove()
+    })
+
+    // 对记录的actions操作进行处理
+    actions.forEach(action=>{
+        const {type, oldVNode, newVNode, index} = action
+        const childNodes = currentDOM.childNodes
+        const currentChildNode = childNodes[index]
+        function insertBeforeChild(){
+            if(type === CREATE){
+                return createDOM(newVNode)
+            }
+            if(type === MOVE){
+                return findDOMByVNode(oldVNode)
+            }
+        }
+        // 如果要插入dom的位置上已经有dom了，那么就需要插入到这个dom的前面
+        if(currentChildNode){
+            currentDOM.insertBefore(insertBeforeChild(), currentChildNode)
+        }else{
+            // 没有dom，直接插入
+            currentDOM.appendChild(insertBeforeChild())
+        }
+    })
 }
 
 // 生成forwardRef的dom
@@ -113,6 +277,9 @@ function createDOM(VNode) {
     if(typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT){
         return getFunctionalDOM(VNode)
     }
+    if(type === REACT_TEXT){
+        dom = document.createTextNode(props.text)
+    }
     // 创建元素
     if(type && VNode.$$typeof === REACT_ELEMENT){
         dom = document.createElement(type)
@@ -123,8 +290,6 @@ function createDOM(VNode) {
             mount(props.children, dom)
         }else if(Array.isArray(props.children)){
             mountArray(props.children, dom)
-        }else if(typeof props.children === 'string'){
-            dom.appendChild(document.createTextNode(props.children))
         }
     }
     // 处理属性值
