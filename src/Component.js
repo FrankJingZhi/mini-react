@@ -39,17 +39,27 @@ class Updater{
             this.launchUpdate()
         }
     }
-    launchUpdate(){
+    launchUpdate(nextProps){
         const {classComponentInstance, pendingStates} = this
-        if(pendingStates.length === 0) return 
+        // 判断是否需要更新
+        let isShouldUpdate = true
+        // 如果没有需要更新的状态 && 没有新的props，则直接返回
+        if(pendingStates.length === 0 && !nextProps) return 
         // 合并状态数据
-        classComponentInstance.state = pendingStates.reduce((preStates, newState)=>{
+        const nextState = pendingStates.reduce((preStates, newState)=>{
             return {...preStates, ...newState}
         }, classComponentInstance.state)
+        classComponentInstance.state = nextState
+        if(nextProps) classComponentInstance.props = nextProps
         // 清空状态
         this.pendingStates.length = 0
+        if(classComponentInstance.shouldComponentUpdate && 
+            !classComponentInstance.shouldComponentUpdate(classComponentInstance.props, classComponentInstance.state)
+        ) {
+            isShouldUpdate = false
+        }
         // 更新组件
-        classComponentInstance.update()
+        if(isShouldUpdate) classComponentInstance.update()
     }
 }
 
@@ -76,6 +86,8 @@ export class Component {
         let newVNode = this.render() 
         updateDOMTree(oldVNode, newVNode, oldDOM)
         this.oldVNode = newVNode
+        // 执行componentDidUpdate
+        if(this.componentDidUpdate) this.componentDidUpdate(this.props, this.state)
     }
 }
 

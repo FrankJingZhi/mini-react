@@ -69,7 +69,12 @@ function getClassDOM(VNode){
     // },6000)
     // TODO: 需要删除的代码 end
     if(!renderVNode) return null
-    return createDOM(renderVNode)
+    const dom = createDOM(renderVNode)
+    // 调用componentDidMount
+    if(typeof instance.componentDidMount === 'function'){
+        instance.componentDidMount()
+    }
+    return dom
 }
 
 // 根据虚拟dom找到dom
@@ -120,6 +125,9 @@ export function updateDOMTree(oldVNode, newVNode, oldDOM) {
 function removeVNode(VNode){
     const currentDOM = findDOMByVNode(VNode)
     currentDOM && currentDOM.remove()
+    if(VNode.classInstance && typeof VNode.componentWillUnmount === 'function'){
+        VNode.componentWillUnmount()
+    }
 }
 
 // 旧节点和新节点都存在，类型一样 --> 值得我们进行深入探究，dom diff算法
@@ -159,7 +167,7 @@ function deepDOMDiff(oldVNode, newVNode){
 function updateClassComponent(oldVNode, newVNode){
     // 找到类组件实例，执行更新。实现递归更新
     const classInstance = newVNode.classInstance = oldVNode.classInstance
-    classInstance.updater.launchUpdate()
+    classInstance.updater.launchUpdate(newVNode.props)
 }
             
 function updateFunctionComponent(oldVNode, newVNode){
