@@ -118,42 +118,76 @@ class MyChildComponent extends React.Component{
 //   }
 
 // dom diff调试案例
-class MyDomDiffComponent extends React.Component{
-    isReset = false
-    oldValue = ['A','B','C','D','E']
-    newValue = ['C','B','E','F','A']
+// class MyDomDiffComponent extends React.Component{
+//     isReset = false
+//     oldValue = ['A','B','C','D','E']
+//     newValue = ['C','B','E','F','A']
+//     constructor(props){
+//         super(props)
+//         this.state = {
+//             value: this.oldValue
+//         }
+//     }
+//     updateValue(){
+//         this.setState({
+//             value: this.isReset ? this.oldValue : this.newValue
+//         })
+//     }
+//     render(){
+//         return <div>
+//             <p style={{
+//                 padding: '5px',
+//                 border: '1px solid red',
+//                 color: 'red',
+//                 borderRadius: '4px',
+//                 width: '200px',
+//                 cursor: 'pointer'
+//             }}
+//                 onClick={() => this.updateValue()}
+//             >
+//                 updateValue
+//             </p>
+//             <p>
+//                 {this.state.value.map(item => <span key={item}>{item}</span>)}
+//             </p>
+//         </div>
+//     }
+// }
+// ReactDOM.render(<MyDomDiffComponent />, document.getElementById('root'))
+
+
+// 生命周期case
+class MyLifeCycleComponent extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-            value: this.oldValue
+            time: new Date()
         }
     }
-    updateValue(){
-        this.setState({
-            value: this.isReset ? this.oldValue : this.newValue
-        })
+    componentDidMount(){
+        console.log('componentDidMount')
+        this.timer = setInterval(() => {
+            this.setState({
+                time: new Date()
+            })
+        }, 1000)
+    }
+    componentWillUnmount(){
+        clearInterval(this.timer)
+    }
+    shouldComponentUpdate(){
+        console.log('shouldComponentUpdate')
+        return false
+    }
+    componentDidUpdate(prevProps, prevState, snapshot){
+        console.log('componentDidUpdate')
     }
     render(){
+        console.log('render')
         return <div>
-            <p style={{
-                padding: '5px',
-                border: '1px solid red',
-                color: 'red',
-                borderRadius: '4px',
-                width: '200px',
-                cursor: 'pointer'
-            }}
-                onClick={() => this.updateValue()}
-            >
-                updateValue
-            </p>
-            <p>
-                {this.state.value.map(item => <span key={item}>{item}</span>)}
-            </p>
+            <p>{this.state.time.toLocaleTimeString()}</p>
         </div>
     }
 }
-ReactDOM.render(<MyDomDiffComponent />, document.getElementById('root'))
 
-
-  
+ReactDOM.render(<MyLifeCycleComponent />, document.getElementById('root'))
