@@ -1,4 +1,4 @@
-import {REACT_ELEMENT,REACT_FORWARD_REF, toVNode} from './utils'
+import {REACT_ELEMENT,REACT_FORWARD_REF, toVNode, shallowEqual} from './utils'
 import {Component} from './Component'
 
 function createElement(type, properties, children){
@@ -36,11 +36,18 @@ function forwardRef(render){
     }
 }
 
+export class PureComponent extends Component{
+    shouldComponentUpdate(nextProps, nextState){
+        return !shallowEqual(this.props, nextProps) || !shallowEqual(this.state, nextState)
+    }
+}
+
 const React = {
     createElement,
     Component,
     createRef,
-    forwardRef
+    forwardRef,
+    PureComponent
 }
 
 export default React;
