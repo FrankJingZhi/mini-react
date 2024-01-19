@@ -1,10 +1,18 @@
 import { REACT_ELEMENT, REACT_FORWARD_REF,REACT_TEXT,CREATE,MOVE } from "./utils";
 import {addEvent} from './event.js'
+import {resetHookIndex} from './hooks.js'
+
+export let emitUpdateForHooks
 
 function render(VNode, containerDOM) {
     // 将虚拟DOM转换成真实DOM
     // 将虚拟DOM挂在到容器上
     mount(VNode, containerDOM)
+
+    emitUpdateForHooks = function(){
+        resetHookIndex()
+        updateDOMTree(VNode, VNode, findDOMByVNode(VNode))
+    }
 }
 
 function mount(VNode, containerDOM) {
@@ -16,14 +24,19 @@ function mount(VNode, containerDOM) {
 
 function mountArray(VNodes, containerDOM) {
     if(!Array.isArray(VNodes)) return 
-    VNodes.forEach((vnode,index) => {
-        if(Array.isArray(vnode)){
-            mountArray(vnode, containerDOM)
-            return
+    for(let i = 0; i < VNodes.length; i++){
+        if(!VNodes[i]) {
+            VNodes.splice(i,1)
+            i--
+            continue
         }
-        vnode.index = index // dom diff 有用
-        mount(vnode, containerDOM)
-    })
+        if(Array.isArray(VNodes[i])){
+            mountArray(VNodes[i], containerDOM)
+            continue
+        }
+        VNodes[i].index = i // dom diff 有用
+        mount(VNodes[i], containerDOM)
+    }
 }
 
 // 处理属性
@@ -48,7 +61,10 @@ function getFunctionalDOM(VNode){
     const {type, props} = VNode
     const renderVNode = type(props)
     if(!renderVNode) return null
-    return createDOM(renderVNode)
+    const dom = createDOM(renderVNode)
+    VNode.oldRenderVNode = renderVNode
+    VNode.dom = dom
+    return dom
 }
 
 // 处理类组件
@@ -180,13 +196,13 @@ function updateFunctionComponent(oldVNode, newVNode){
 
 // 比对子节点 - dom diff算法核心
 function updateChildren(currentDOM, oldChildren, newChildren){
-    const oldVNodeChildren = Array.isArray(oldChildren) ? oldChildren : [oldChildren]
-    const newVNodeChildren = Array.isArray(newChildren) ? newChildren : [newChildren]
+    const oldVNodeChildren = (Array.isArray(oldChildren) ? oldChildren : [oldChildren]).filter(vnode => vnode)
+    const newVNodeChildren = (Array.isArray(newChildren) ? newChildren : [newChildren]).filter(vnode => vnode)
     let lastNotChangeIndex = -1 // 当前 已遍历过的节点在旧节点中的index 中，最大的index
     // 存储旧节点的key-vnode对应关系，后面对比用
     const oldVNodeChildrenMap = {}
     oldVNodeChildren.forEach((vnode, index)=>{
-        const key = vnode.key ? vnode.key : index
+        const key = vnode && vnode.key ? vnode.key : index
         oldVNodeChildrenMap[key] = vnode
     })
     // 遍历新虚拟dom，找到

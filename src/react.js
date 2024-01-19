@@ -47,7 +47,13 @@ const React = {
     Component,
     createRef,
     forwardRef,
-    PureComponent
+    PureComponent,
 }
 
 export default React;
+export {
+    useState,
+    useReducer,
+    useEffect,
+    useRef
+} from './hooks'
