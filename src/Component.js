@@ -81,6 +81,7 @@ export class Component {
         // 获取旧的虚拟dom和新的虚拟dom
         // 将旧的dom删除
         // 将新的dom挂载到容器上
+        debugger
         let oldVNode = this.oldVNode; // 让类组件拥有一个oldVNode属性保存类组件实例对应的虚拟dom
         let oldDOM = findDOMByVNode(oldVNode); // 让真实dom保存到oldVNode上
         let newVNode = this.render() 
